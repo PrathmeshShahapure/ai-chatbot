@@ -1,12 +1,12 @@
 import streamlit as st
-from backend import chatbot
+from backend import chatbot,retrive_all_threads
 from langchain_core.messages import HumanMessage
 import uuid
 
 # utility Functions
 def generate_thread_id():
     thread_id=uuid.uuid4()
-    return thread_id
+    return str(thread_id)
 
 def reset_chat():
     thread_id=generate_thread_id()
@@ -19,7 +19,10 @@ def add_thread(thread_id):
         st.session_state['chat_threads'].append(thread_id)
 
 def load_convo(thread_id):
-    return chatbot.get_state(config={'configurable':{'thread_id':thread_id}},).values['messages']
+    state=chatbot.get_state(
+        config={'configurable':{'thread_id':thread_id}}
+                          )
+    return state.values.get('messages', [])
 
 
 # session setup
@@ -30,7 +33,7 @@ if 'thread_id' not in st.session_state:
     st.session_state['thread_id']=generate_thread_id()
 
 if 'chat_threads' not in st.session_state:
-    st.session_state['chat_threads']=[]
+    st.session_state['chat_threads']=retrive_all_threads()
 
 add_thread(st.session_state['thread_id'])
 
@@ -43,17 +46,17 @@ if st.sidebar.button("New Chat "):
 st.sidebar.header("My Conversations")
 
 for thread_id in st.session_state['chat_threads'][::-1]:
-    if st.sidebar.button(str(thread_id)):
+    if st.sidebar.button(thread_id):
         st.session_state['thread_id']=thread_id
         messages=load_convo(thread_id)
 
         temp_msg=[]
-        for m in messages:
-            if isinstance(messages,HumanMessage):
+        for message in messages:
+            if isinstance(message,HumanMessage):
                 role='user'
             else :
                 role='ai'
-            temp_msg.append({'role':role,'content':m.content})
+            temp_msg.append({'role':role,'content':message.content})
         st.session_state['message_history']=temp_msg
 
 
@@ -70,7 +73,6 @@ if user_input:
     with st.chat_message("human"):
         st.text(f"{user_input} ")
 
-    thread_id='1'
     CONFIG={'configurable':{'thread_id':st.session_state['thread_id']}}
 
     with st.chat_message("ai"):
