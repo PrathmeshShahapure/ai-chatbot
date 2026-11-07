@@ -3,3 +3,6 @@ __pycache__/
 .env
 *.pyc
 .ipynb_checkpoints/
+chatbot.db
+chatbot.db-shm
+chatbot.db-wal
